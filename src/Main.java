@@ -1,31 +1,11 @@
 import java.util.LinkedList;
 import java.util.Queue;
 
-class CPUQueue {
-    private Queue<CPUProcess> queue = new LinkedList<>();
-    private int maxQueueLength = 0;
-
-    public synchronized void enqueue(CPUProcess process) {
-        queue.add(process);
-        if (queue.size() > maxQueueLength) {
-            maxQueueLength = queue.size();
-        }
-    }
-
-    public synchronized CPUProcess dequeue() {
-        return queue.poll();
-    }
-
-    public int getMaxQueueLength() {
-        return maxQueueLength;
-    }
-}
-
 class CPUProcess extends Thread {
-    private static final int MIN_INTERVAL = 1;
-    private static final int MAX_INTERVAL = 50000;
+    private static final int MIN_INTERVAL = 100;
+    private static final int MAX_INTERVAL = 1000;
     private static final int MIN_PROCESSING_TIME = 50;
-    private static final int MAX_PROCESSING_TIME = 200000;
+    private static final int MAX_PROCESSING_TIME = 500;
 
     private CPUQueue queue;
 
@@ -83,19 +63,26 @@ class CPU extends Thread {
 public class Main {
     public static void main(String[] args) {
         CPUQueue queue = new CPUQueue();
-        CPUProcess process = new CPUProcess(queue);
+        int numberOfProcesses = 5;
+
+        CPUProcess[] processes = new CPUProcess[numberOfProcesses];
+        for (int i = 0; i < numberOfProcesses; i++) {
+            processes[i] = new CPUProcess(queue);
+            processes[i].start();
+        }
+
         CPU cpu = new CPU(queue);
 
-        process.start();
-        cpu.start();
-
         try {
-            Thread.sleep(100000); // Run the simulation for 5 seconds
+            Thread.sleep(10000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
-        process.interrupt();
+        for (int i = 0; i < numberOfProcesses; i++) {
+            processes[i].interrupt();
+        }
+
         cpu.interrupt();
 
         System.out.println("Max Queue Length: " + queue.getMaxQueueLength());
